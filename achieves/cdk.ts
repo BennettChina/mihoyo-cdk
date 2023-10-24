@@ -1,7 +1,6 @@
-import { InputParameter } from "@modules/command";
-import { get_cdk } from "#mihoyo-cdk/util/api";
-import { segment } from "icqq";
-import { isPrivateMessage } from "@modules/message";
+import { InputParameter } from "@/modules/command";
+import { get_cdk } from "#/mihoyo-cdk/util/api";
+import { ForwardElem } from "@/modules/lib";
 
 export async function main( { sendMessage, client, messageData }: InputParameter ): Promise<void> {
 	const codes = await get_cdk();
@@ -10,7 +9,15 @@ export async function main( { sendMessage, client, messageData }: InputParameter
 		return;
 	}
 	
-	const nodes = codes.map( code => segment.fake( client.uin, code, client.nickname ) );
-	const forwardMsg = await client.makeForwardMsg( nodes, isPrivateMessage( messageData ) );
+	const info = await client.getLoginInfo();
+	const nodes = codes.map( code => ( {
+		uin: client.uin,
+		name: info.data.nickname,
+		content: code
+	} ) );
+	const forwardMsg: ForwardElem = {
+		type: "forward",
+		messages: nodes
+	};
 	await sendMessage( forwardMsg );
 }
