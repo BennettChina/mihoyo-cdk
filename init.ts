@@ -7,7 +7,7 @@ export default definePlugin( {
 	repo: {
 		owner: "BennettChina",
 		repoName: "mihoyo-cdk",
-		ref: "master"
+		ref: "v3"
 	},
 	async mounted( params ) {
 		params.setAlias( [ "兑换码", "cdk" ] );
