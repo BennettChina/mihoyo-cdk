@@ -1,8 +1,8 @@
-import { InputParameter } from "@/modules/command";
+import { defineDirective, InputParameter } from "@/modules/command";
 import { get_cdk } from "#/mihoyo-cdk/util/api";
 import { ForwardElem } from "@/modules/lib";
 
-export async function main( { sendMessage, client, messageData }: InputParameter ): Promise<void> {
+export default defineDirective( "order", async ( { sendMessage, client }: InputParameter ) => {
 	const codes = await get_cdk();
 	if ( codes.length === 0 ) {
 		await sendMessage( "暂无直播兑换码" );
@@ -20,4 +20,4 @@ export async function main( { sendMessage, client, messageData }: InputParameter
 		messages: nodes
 	};
 	await sendMessage( forwardMsg );
-}
+} );
