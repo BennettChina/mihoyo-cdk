@@ -1,6 +1,7 @@
 import axios from "axios";
 import bot from "ROOT";
 import moment from "moment";
+import { CodeType } from "#mihoyo-cdk/util/types";
 
 enum Api {
 	mihoyo_act_id = "https://bbs-api.mihoyo.com/painter/api/user_instant/list?offset=0&size=20&uid=",
@@ -95,7 +96,8 @@ async function getCode( actId: string, code_ver: string ) {
 	return code_list.map( item => item.code );
 }
 
-export async function get_cdk(): Promise<string[]> {
+export async function get_cdk(): Promise<CodeType[]> {
+	const result: CodeType[] = [];
 	for ( let key in user_map ) {
 		try {
 			// 获取请求头
@@ -109,12 +111,13 @@ export async function get_cdk(): Promise<string[]> {
 			// 获取cdk
 			const codes = await getCode( actId, code_ver );
 			if ( codes.length > 0 ) {
-				return [ `${ title }-直播兑换码`, codes.length >= 3 ? "兑换码存在有效期，请尽快兑换!" : `暂时仅获取到${ codes.length }个直播兑换码，请稍后再次获取`, ...codes ];
+				const item = { title, codes };
+				result.push( item );
 			}
 		} catch ( err ) {
 			bot.logger.info( `[cdk] 获取${ user_map[key] }直播码失败:`, err );
 		}
 	}
 	
-	return [];
+	return result;
 }
