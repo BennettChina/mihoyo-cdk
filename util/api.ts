@@ -93,7 +93,7 @@ async function getCode( actId: string, code_ver: string ) {
 	}
 	
 	const code_list = data.data.code_list;
-	return code_list.map( item => item.code );
+	return code_list.map( item => item.code ).filter( code => !!code );
 }
 
 export async function get_cdk(): Promise<CodeType[]> {
