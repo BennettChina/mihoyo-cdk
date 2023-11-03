@@ -11,14 +11,14 @@ enum Api {
 
 const keywords_map: Record<string, string[]> = {
 	"genshin": [ "版本前瞻特别节目" ],
-	"hk_star_rail": [ "版本前瞻特别节目" ],
+	"hk_star_rail": [ "版本前瞻特别节目", "版本前瞻" ],
 	"hk_three": [ "特别节目预告", "版本特别节目" ],
 	"zzz": []
 }
 
 const user_map = {
 	"75276550": "genshin",
-	"288909600": "hk_star_rail",
+	"80823548": "hk_star_rail",
 	"73565430": "hk_three",
 	"152039072": "zzz"
 }
