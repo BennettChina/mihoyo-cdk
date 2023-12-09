@@ -23,7 +23,13 @@ const user_map = {
 	"152039072": "zzz"
 }
 
+const EXPIRE_TIME = 24 * 60 * 60;
+
 async function getActId( uid: string = "75276550" ) {
+	const key = `miHoYo.actId.${ uid }`
+	const value = await bot.redis.getString( key );
+	if ( value ) return value;
+	
 	const response = await axios.get( Api.mihoyo_act_id + uid );
 	const data = response.data;
 	if ( data.error || data.retcode !== 0 ) return Promise.reject( data.message );
@@ -44,7 +50,9 @@ async function getActId( uid: string = "75276550" ) {
 		if ( !link ) continue;
 		const url = new URL( link );
 		if ( url.hostname === 'webstatic.mihoyo.com' && url.pathname === '/bbs/event/live/index.html' ) {
-			return url.searchParams.get( "act_id" );
+			const actId = url.searchParams.get( "act_id" );
+			await bot.redis.setString( key, actId || "", EXPIRE_TIME );
+			return actId;
 		}
 	}
 }
@@ -76,6 +84,10 @@ async function getLiveInfo( actId: string ) {
 }
 
 async function getCode( actId: string, code_ver: string ) {
+	const key = `miHoYo.codes.${ actId }:${ code_ver }`
+	const value = await bot.redis.getString( key );
+	if ( value ) return JSON.parse( value );
+	
 	const time: number = Date.now() / 1000 | 0;
 	const response = await axios.get( Api.mihoyo_live_code, {
 		params: {
@@ -93,7 +105,12 @@ async function getCode( actId: string, code_ver: string ) {
 	}
 	
 	const code_list = data.data.code_list;
-	return code_list.map( item => item.code ).filter( code => !!code );
+	const codes = code_list.map( item => item.code ).filter( code => !!code );
+	if ( codes.length < 3 ) {
+		return codes;
+	}
+	await bot.redis.setString( key, JSON.stringify( codes ), EXPIRE_TIME );
+	return codes;
 }
 
 export async function get_cdk(): Promise<CodeType[]> {

@@ -20,13 +20,13 @@ export default defineDirective( "order", async ( { sendMessage, client }: InputP
 			tips = `${ title }-直播兑换码，暂时仅获取到${ codes.length }个直播兑换码，请稍后再次获取`;
 		}
 		const item = codes.map( code => ( {
-			uin: client.uin,
-			name: info.data.nickname,
+			user_id: client.uin,
+			nickname: info.data.nickname || undefined,
 			content: code
 		} ) )
 		nodes.push( {
-			uin: client.uin,
-			name: info.data.nickname,
+			user_id: client.uin,
+			nickname: info.data.nickname || undefined,
 			content: tips
 		} )
 		nodes.push( ...item );
