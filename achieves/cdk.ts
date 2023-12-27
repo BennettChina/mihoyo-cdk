@@ -2,7 +2,7 @@ import { defineDirective, InputParameter } from "@/modules/command";
 import { get_cdk } from "#/mihoyo-cdk/util/api";
 import { ForwardElem, ForwardElemCustomNode } from "@/modules/lib";
 
-export default defineDirective( "order", async ( { sendMessage, client }: InputParameter ) => {
+export default defineDirective( "order", async ( { sendMessage, client, logger }: InputParameter ) => {
 	const cdks = await get_cdk();
 	if ( cdks.length === 0 ) {
 		await sendMessage( "暂无直播兑换码" );
@@ -35,5 +35,12 @@ export default defineDirective( "order", async ( { sendMessage, client }: InputP
 		type: "forward",
 		messages: nodes
 	};
-	await sendMessage( forwardMsg );
+	try {
+		await sendMessage( forwardMsg );
+	} catch ( err ) {
+		logger.warn( err );
+		// 合并转发不可用时发成一条消息
+		const content = nodes.map( item => item.content ).join( "\n" );
+		await sendMessage( content );
+	}
 } );

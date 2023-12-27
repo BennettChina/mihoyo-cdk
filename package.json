@@ -3,7 +3,7 @@
   "author" : "Bennett",
   "private" : true,
   "license" : "MIT",
-  "version" : "2.0.1",
+  "version" : "2.0.2",
   "description" : "米哈游兑换码插件 为 Adachi-BOT 衍生插件，用于获取 miHoYo 游戏的直播码。",
   "dependencies" : {
   }
