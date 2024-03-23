@@ -12,9 +12,9 @@ export default defineDirective( "order", async ( { sendMessage, client, logger }
 	const info = await client.getLoginInfo();
 	
 	const nodes: ForwardElemCustomNode[] = [];
-	for ( let { title, codes } of cdks ) {
+	for ( let { title, codes, total } of cdks ) {
 		let tips: string = "";
-		if ( codes.length >= 3 ) {
+		if ( codes.length >= total ) {
 			tips = `${ title }-直播兑换码，兑换码存在有效期，请尽快兑换!`;
 		} else {
 			tips = `${ title }-直播兑换码，暂时仅获取到${ codes.length }个直播兑换码，请稍后再次获取`;
