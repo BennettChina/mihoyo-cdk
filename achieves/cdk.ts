@@ -39,8 +39,9 @@ export default defineDirective( "order", async ( { sendMessage, client, logger }
 		await sendMessage( forwardMsg );
 	} catch ( err ) {
 		logger.warn( err );
-		// 合并转发不可用时发成一条消息
-		const content = nodes.map( item => item.content ).join( "\n" );
-		await sendMessage( content );
+		// 发送失败，尝试逐条发送
+		for ( let node of nodes ) {
+			await sendMessage( node.content );
+		}
 	}
 } );
