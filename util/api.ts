@@ -54,24 +54,27 @@ async function getActId( official: Official ) {
 	if ( data.error || data.retcode !== 0 ) return Promise.reject( data.message );
 	
 	const list: any[] = data.data.list;
-	const find = list.find( item => {
+	const filter = list.filter( item => {
 		const post = item.post?.post;
 		if ( !post ) return false;
 		const keywords = official.keywords;
 		return keywords.some( keyword => post.subject.includes( keyword ) );
 	} );
 	
-	if ( !find ) return Promise.reject( '未找到直播预告帖' );
-	const content = find.post.post["structured_content"];
-	const json: any[] = JSON.parse( content );
-	for ( let item of json ) {
-		const link: string | undefined = item.attributes?.link;
-		if ( !link ) continue;
-		const url = new URL( link );
-		if ( url.hostname === 'webstatic.mihoyo.com' && url.pathname === '/bbs/event/live/index.html' ) {
-			const actId = url.searchParams.get( "act_id" );
-			await bot.redis.setString( key, actId || "", EXPIRE_TIME );
-			return actId;
+	if ( !filter || filter.length === 0 ) return Promise.reject( '未找到直播预告帖' );
+	
+	for ( let post of filter ) {
+		const content = post.post.post["structured_content"];
+		const json: any[] = JSON.parse( content );
+		for ( let item of json ) {
+			const link: string | undefined = item.attributes?.link;
+			if ( !link ) continue;
+			const url = new URL( link );
+			if ( url.hostname === 'webstatic.mihoyo.com' && url.pathname === '/bbs/event/live/index.html' ) {
+				const actId = url.searchParams.get( "act_id" );
+				await bot.redis.setString( key, actId || "", EXPIRE_TIME );
+				return actId;
+			}
 		}
 	}
 }
