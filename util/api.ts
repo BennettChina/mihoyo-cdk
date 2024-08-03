@@ -36,7 +36,7 @@ const officials: Official[] = [
 	},
 	{
 		name: "绝区零",
-		user_id: "152039149",
+		user_id: "152039148",
 		keywords: [ "前瞻讨论活动", "版本前瞻" ],
 		total_cdk: 1
 	}
