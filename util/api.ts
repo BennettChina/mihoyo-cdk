@@ -172,7 +172,7 @@ export async function get_cdk(): Promise<CodeType[]> {
 			const codes = await getCode( actId, code_ver );
 			if ( codes.length > 0 ) {
 				bot.logger.info( `[cdk] 成功获取 ${ official.name } 的直播码。` )
-				const item: CodeType = { title, codes, total: official.total_cdk };
+				const item: CodeType = { gids: official.gids, title, codes, total: official.total_cdk };
 				result.push( item );
 			}
 		} catch ( err ) {

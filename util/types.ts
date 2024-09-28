@@ -1,4 +1,5 @@
 export interface CodeType {
+	gids: number;
 	title: string;
 	codes: string[];
 	total: number;
