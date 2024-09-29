@@ -126,7 +126,7 @@ async function getLiveInfo( actId: string ) {
 	return Promise.reject( `${ title }，暂无直播兑换码` );
 }
 
-async function getCode( actId: string, code_ver: string ) {
+async function getCode( actId: string, code_ver: string, total_cdk: number ) {
 	const key = `miHoYo.codes.${ actId }:${ code_ver }`
 	const value = await bot.redis.getString( key );
 	if ( value ) return JSON.parse( value );
@@ -149,7 +149,7 @@ async function getCode( actId: string, code_ver: string ) {
 	const data = response.data.data as RefreshCode;
 	const code_list = data.code_list;
 	const codes = code_list.map( item => item.code ).filter( code => !!code );
-	if ( codes.length < 3 ) {
+	if ( codes.length < total_cdk ) {
 		return codes;
 	}
 	await bot.redis.setString( key, JSON.stringify( codes ), EXPIRE_TIME );
@@ -169,12 +169,14 @@ export async function get_cdk(): Promise<CodeType[]> {
 			if ( !code_ver ) continue;
 			
 			// 获取cdk
-			const codes = await getCode( actId, code_ver );
-			if ( codes.length > 0 ) {
-				bot.logger.info( `[cdk] 成功获取 ${ official.name } 的直播码。` )
-				const item: CodeType = { gids: official.gids, title, codes, total: official.total_cdk };
-				result.push( item );
+			const codes = await getCode( actId, code_ver, official.total_cdk );
+			if ( codes.length === 0 ) {
+				bot.logger.info( `[cdk] 暂未获取到 ${ official.name } 的直播码。` )
+				continue;
 			}
+			bot.logger.info( `[cdk] 成功获取 ${ official.name } 的直播码。` )
+			const item: CodeType = { gids: official.gids, title, codes, total: official.total_cdk };
+			result.push( item );
 		} catch ( err ) {
 			bot.logger.info( `[cdk] 获取 ${ official.name } 直播码失败:`, err );
 		}
