@@ -1,9 +1,10 @@
 import { defineDirective, InputParameter } from "@/modules/command";
 import { db_key } from "#/mihoyo-cdk/module/db";
+import { isGroupMessage } from "@/modules/message";
 
 export default defineDirective( "switch", async ( input: InputParameter ) => {
 	const { sendMessage, redis, messageData, matchResult: { isOn } } = input;
-	const userId = messageData.user_id.toString();
+	const userId = isGroupMessage( messageData ) ? messageData.group_id.toString() : messageData.user_id.toString();
 	const exist = await redis.getHashField( db_key.subscribe, userId );
 	if ( isOn && exist ) {
 		await sendMessage( "你已订阅CDK" );
