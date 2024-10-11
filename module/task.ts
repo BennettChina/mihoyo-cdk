@@ -16,6 +16,16 @@ export class Task {
 	
 	constructor() {
 		this.task_name = "miHoYo-cdk-task";
+		
+		// 初始化通知过的数据
+		Bot.redis.getHash( db_key.notificationStatus ).then( obj => {
+			Object.entries( obj ).forEach( ( [ key, value ] ) => {
+				this.notifications.set( parseInt( key ), parseInt( value ) );
+			} )
+		} ).catch( err => {
+			Bot.logger.error( err );
+		} );
+		
 		this.job = scheduleJob( this.task_name, "0 0/15 20-21 * * ?", async () => {
 			const subscribe = await Bot.redis.getHash( db_key.subscribe );
 			const entries = Object.entries( subscribe );
@@ -84,6 +94,9 @@ export class Task {
 					}
 				}
 			}
+			
+			// 把通知缓存入库
+			await Bot.redis.setHash( db_key.notificationStatus, this.notifications );
 		} )
 	}
 	

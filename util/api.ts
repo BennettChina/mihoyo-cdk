@@ -51,7 +51,8 @@ const officials: Official[] = [
 	}
 ];
 
-const EXPIRE_TIME = 24 * 60 * 60;
+const EXPIRE_TIME = 20 * 60 * 60;
+const CODE_EXPIRE_TIME = 24 * 60 * 60;
 
 async function getActId( official: Official ) {
 	const key = `miHoYo.actId.${ official.user_id }`
@@ -152,7 +153,7 @@ async function getCode( actId: string, code_ver: string, total_cdk: number ) {
 	if ( codes.length < total_cdk ) {
 		return codes;
 	}
-	await bot.redis.setString( key, JSON.stringify( codes ), EXPIRE_TIME );
+	await bot.redis.setString( key, JSON.stringify( codes ), CODE_EXPIRE_TIME );
 	return codes;
 }
 
