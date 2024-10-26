@@ -38,7 +38,7 @@ const officials: Official[] = [
 	{
 		name: "崩坏3",
 		user_id: "73565430",
-		keywords: [ "特别节目预告", "版本特别节目" ],
+		keywords: [ "特别节目预告", "版本特别节目", "节目预告" ],
 		total_cdk: 1,
 		gids: 1
 	},
@@ -60,8 +60,9 @@ async function getActId( official: Official ) {
 	if ( value ) return value;
 	
 	const { navigator } = await getHome( official.gids );
+	const navigatorName = [ "前瞻直播", "特别节目", "直播" ];
 	const live = navigator.find( item => {
-		return item.name === "前瞻直播" || item.name.includes( "直播" );
+		return navigatorName.some( name => item.name.includes( name ) );
 	} );
 	if ( live ) {
 		let actId = new URL( live.app_path ).searchParams.get( "act_id" );
