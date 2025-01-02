@@ -3,6 +3,7 @@ export interface CodeType {
 	title: string;
 	codes: string[];
 	total: number;
+	expireDate: string;
 }
 
 export type Cdk = {

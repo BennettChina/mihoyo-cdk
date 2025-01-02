@@ -43,14 +43,14 @@ export class Task {
 			const info = await Bot.client.getLoginInfo();
 			
 			const nodes: ForwardElemCustomNode[] = [];
-			for ( let { title, codes, total, gids } of cdks ) {
+			for ( let { title, codes, total, gids, expireDate } of cdks ) {
 				// 15天内推送过的都不需要再推送，可以避免多次推送同一版本的 cdk
 				const time = this.notifications.get( gids ) || 0;
 				if ( Date.now() - time < this.EXPIRE_TIME ) continue;
 				
 				let tips: string = "";
 				if ( codes.length >= total ) {
-					tips = `${ title }-直播兑换码，兑换码存在有效期，请尽快兑换!`;
+					tips = `${ title }-直播兑换码，兑换码将于${ expireDate }过期，请尽快兑换~`;
 					this.notifications.set( gids, Date.now() );
 				} else {
 					tips = `${ title }-直播兑换码，暂时仅获取到${ codes.length }个直播兑换码，请稍后再次获取`;

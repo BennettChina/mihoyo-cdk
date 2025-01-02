@@ -19,6 +19,7 @@ type Official = {
 	keywords: string[];
 	total_cdk: number;
 	gids: number;
+	expire_time: number;//单位：小时，统一以兑换码发放当天的0点开始计算
 };
 
 const officials: Official[] = [
@@ -28,31 +29,35 @@ const officials: Official[] = [
 		keywords: [ "版本前瞻特别节目" ],
 		total_cdk: 3,
 		gids: 2,
+		expire_time: 84
 	}, {
 		name: "崩坏·星穹铁道",
 		user_id: "80823548",
 		keywords: [ "版本前瞻特别节目", "版本前瞻" ],
 		total_cdk: 3,
-		gids: 6
+		gids: 6,
+		expire_time: 48
 	},
 	{
 		name: "崩坏3",
 		user_id: "73565430",
 		keywords: [ "特别节目预告", "版本特别节目", "节目预告" ],
 		total_cdk: 1,
-		gids: 1
+		gids: 1,
+		expire_time: 48
 	},
 	{
 		name: "绝区零",
 		user_id: "152039148",
 		keywords: [ "前瞻讨论活动", "版本前瞻" ],
 		total_cdk: 1,
-		gids: 8
+		gids: 8,
+		expire_time: 48
 	}
 ];
 
+const DEFAULT_EXPIRE_TIME = 48;
 const EXPIRE_TIME = 20 * 60 * 60;
-const CODE_EXPIRE_TIME = 24 * 60 * 60;
 
 async function getActId( official: Official ) {
 	const key = `miHoYo.actId.${ official.user_id }`
@@ -102,7 +107,7 @@ async function getActId( official: Official ) {
 	}
 }
 
-async function getLiveInfo( actId: string ) {
+async function getLiveInfo( actId: string, official: Official ) {
 	const response = await axios.get( Api.mihoyo_live, {
 		headers: {
 			'x-rpc-act_id': actId
@@ -119,20 +124,19 @@ async function getLiveInfo( actId: string ) {
 		return Promise.reject( `${ title }，暂无直播兑换码` );
 	}
 	
-	const now = moment();
-	// 直播码当天和第二天有效（第二天24点前都可返回）
-	if ( now.isSame( start, 'day' ) || now.subtract( 1, 'day' ).isSame( start, 'day' ) ) {
-		return { title, code_ver };
+	// 以cdk最初下发的时间为标准，取其过期时间，默认48小时过期（初始时间为下发cdk那一天的0点，这样更好计算）
+	const expireDate = moment( start ).startOf( 'day' )
+		.add( official.expire_time || DEFAULT_EXPIRE_TIME, 'hour' )
+		.subtract( 1, 'second' );
+	// cdk没过期就可以返回
+	if ( expireDate.isAfter( Date.now() ) ) {
+		return { title, code_ver, expireDate };
 	}
 	
 	return Promise.reject( `${ title }，暂无直播兑换码` );
 }
 
-async function getCode( actId: string, code_ver: string, total_cdk: number ) {
-	const key = `miHoYo.codes.${ actId }:${ code_ver }`
-	const value = await bot.redis.getString( key );
-	if ( value ) return JSON.parse( value );
-	
+async function getCode( title: string, actId: string, code_ver: string, expireDate: number, official: Official ): Promise<CodeType> {
 	const time: number = Date.now() / 1000 | 0;
 	const response = await axios.get( Api.mihoyo_live_code, {
 		params: {
@@ -151,34 +155,53 @@ async function getCode( actId: string, code_ver: string, total_cdk: number ) {
 	const data = response.data.data as RefreshCode;
 	const code_list = data.code_list;
 	const codes = code_list.map( item => item.code ).filter( code => !!code );
-	if ( codes.length < total_cdk ) {
-		return codes;
+	if ( codes.length === 0 ) {
+		return Promise.reject( `[cdk] 暂未获取到直播码。` );
 	}
-	await bot.redis.setString( key, JSON.stringify( codes ), CODE_EXPIRE_TIME );
-	return codes;
+	
+	const cdk: CodeType = {
+		gids: official.gids,
+		title,
+		codes,
+		total: official.total_cdk,
+		expireDate: moment( expireDate ).locale( 'zh-cn' ).calendar()
+	};
+	if ( codes.length < official.total_cdk ) {
+		return cdk;
+	}
+	
+	const key = `miHoYo.codes.${ official.gids }`;
+	const expireTime = ( expireDate / 1000 | 0 ) - time;
+	const cacheTime = expireTime <= 0 ? 10 : expireTime;
+	await bot.redis.setString( key, JSON.stringify( cdk ), cacheTime );
+	return cdk;
 }
 
 export async function get_cdk(): Promise<CodeType[]> {
 	const result: CodeType[] = [];
 	for ( let official of officials ) {
 		try {
+			// 取缓存cdk
+			const key = `miHoYo.codes.${ official.gids }`
+			const value = await bot.redis.getString( key );
+			if ( value ) {
+				bot.logger.info( `[cdk] 成功获取 ${ official.name } 的直播码。` );
+				result.push( JSON.parse( value ) );
+				continue;
+			}
+			
 			// 获取请求头
 			const actId = await getActId( official );
 			if ( !actId ) continue;
 			
 			// 获取版本信息
-			const { title, code_ver } = await getLiveInfo( actId );
+			const { title, code_ver, expireDate } = await getLiveInfo( actId, official );
 			if ( !code_ver ) continue;
 			
 			// 获取cdk
-			const codes = await getCode( actId, code_ver, official.total_cdk );
-			if ( codes.length === 0 ) {
-				bot.logger.info( `[cdk] 暂未获取到 ${ official.name } 的直播码。` )
-				continue;
-			}
+			const cdk = await getCode( title, actId, code_ver, expireDate.valueOf(), official );
 			bot.logger.info( `[cdk] 成功获取 ${ official.name } 的直播码。` )
-			const item: CodeType = { gids: official.gids, title, codes, total: official.total_cdk };
-			result.push( item );
+			result.push( cdk );
 		} catch ( err ) {
 			bot.logger.info( `[cdk] 获取 ${ official.name } 直播码失败:`, err );
 		}
