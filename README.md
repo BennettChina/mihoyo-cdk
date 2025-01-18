@@ -23,7 +23,7 @@
 在 `Adachi-BOT/src/plugins` 目录执行下面的命令。
 
 ```shell
-git clone https://mirror.ghproxy.com/https://github.com/BennettChina/mihoyo-cdk.git
+git clone https://gh-proxy.com/https://github.com/BennettChina/mihoyo-cdk.git
 ```
 
 ## 🎁 更新方式
