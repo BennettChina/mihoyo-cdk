@@ -1,4 +1,4 @@
-import axios from "axios";
+import axios, { AxiosError } from "axios";
 import bot from "ROOT";
 import moment from "moment";
 import { CodeType, DeviceFpBody, miHoYoHome, RefreshCode } from "#/mihoyo-cdk/util/types";
@@ -77,7 +77,8 @@ async function getActId( official: Official ) {
 		}
 	}
 	
-	const response = await axios.get( Api.mihoyo_act_id + official.user_id );
+	const response = await axios.get( Api.mihoyo_act_id + official.user_id )
+		.catch( ( reason: AxiosError ) => Promise.reject( reason.message ) );
 	const data = response.data;
 	if ( data.error || data.retcode !== 0 ) return Promise.reject( data.message );
 	
@@ -112,7 +113,7 @@ async function getLiveInfo( actId: string, official: Official ) {
 		headers: {
 			'x-rpc-act_id': actId
 		}
-	} )
+	} ).catch( ( reason: AxiosError ) => Promise.reject( reason.message ) );
 	
 	const data = response.data;
 	if ( data.retcode !== 0 ) {
@@ -146,7 +147,7 @@ async function getCode( title: string, actId: string, code_ver: string, expireDa
 		headers: {
 			'x-rpc-act_id': actId
 		}
-	} )
+	} ).catch( ( reason: AxiosError ) => Promise.reject( reason.message ) );
 	
 	if ( response.data.retcode !== 0 ) {
 		return Promise.reject( response.data.message );
@@ -237,7 +238,8 @@ async function getHome( gids: string | number ): Promise<miHoYoHome> {
 			"x-rpc-sys_version": osVersion,
 			DS: ds2( 'lk2', undefined, params )
 		}
-	} );
+	} ).catch( ( reason: AxiosError ) => Promise.reject( reason.message ) );
+	
 	if ( response.data.retcode !== 0 ) {
 		throw new Error( response.data.message );
 	}
@@ -245,7 +247,8 @@ async function getHome( gids: string | number ): Promise<miHoYoHome> {
 }
 
 export async function getDeviceFp( body: DeviceFpBody ): Promise<string> {
-	const response = await axios.post( Api.getFp, body );
+	const response = await axios.post( Api.getFp, body )
+		.catch( ( reason: AxiosError ) => Promise.reject( reason.message ) );
 	
 	const data = response.data;
 	if ( data.retcode !== 0 ) {
