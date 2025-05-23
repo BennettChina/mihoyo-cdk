@@ -65,7 +65,7 @@ async function getActId( official: Official ) {
 	if ( value ) return value;
 	
 	const { navigator } = await getHome( official.gids );
-	const navigatorName = [ "前瞻直播", "特别节目", "直播" ];
+	const navigatorName = [ "前瞻直播", "特别节目", "直播", "前瞻" ];
 	const live = navigator.find( item => {
 		return navigatorName.some( name => item.name.includes( name ) );
 	} );

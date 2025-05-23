@@ -26,7 +26,7 @@ export class Task {
 			Bot.logger.error( err );
 		} );
 		
-		this.job = scheduleJob( this.task_name, "0 0/15 20-21 * * ?", async () => {
+		this.job = scheduleJob( this.task_name, "0 0/5 19-21 * * ?", async () => {
 			const subscribe = await Bot.redis.getHash( db_key.subscribe );
 			const entries = Object.entries( subscribe );
 			if ( entries.length === 0 ) {
@@ -48,13 +48,12 @@ export class Task {
 				const time = this.notifications.get( gids ) || 0;
 				if ( Date.now() - time < this.EXPIRE_TIME ) continue;
 				
-				let tips: string = "";
-				if ( codes.length >= total ) {
-					tips = `${ title }-直播兑换码，兑换码将于${ expireDate }过期，请尽快兑换~`;
-					this.notifications.set( gids, Date.now() );
-				} else {
-					tips = `${ title }-直播兑换码，暂时仅获取到${ codes.length }个直播兑换码，请稍后再次获取`;
+				if ( codes.length < total ) {
+					Bot.logger.info( `${ title }-直播兑换码，暂时仅获取到${ codes.length }个直播兑换码，剩余 ${ total - codes.length } 个` );
+					continue;
 				}
+				const tips: string = `${ title }-直播兑换码，兑换码将于${ expireDate }过期，请尽快兑换~`;
+				this.notifications.set( gids, Date.now() );
 				const item = codes.map( code => ( {
 					user_id: Bot.client.uin,
 					nickname: info.data.nickname || "Bot",
