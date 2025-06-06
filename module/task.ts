@@ -11,6 +11,7 @@ export class Task {
 	private readonly task_name: string;
 	private readonly job: Job;
 	private readonly notifications = new Map<number, number>();
+	private readonly notify_ids = new Map<string, number | string>();
 	// 15天的有效期
 	private readonly EXPIRE_TIME: number = 60 * 60 * 24 * 1000 * 15;
 	
@@ -21,6 +22,13 @@ export class Task {
 		Bot.redis.getHash( db_key.notificationStatus ).then( obj => {
 			Object.entries( obj ).forEach( ( [ key, value ] ) => {
 				this.notifications.set( parseInt( key ), parseInt( value ) );
+			} )
+		} ).catch( err => {
+			Bot.logger.error( err );
+		} );
+		Bot.redis.getHash( db_key.notify_ids ).then( obj => {
+			Object.entries( obj ).forEach( ( [ key, value ] ) => {
+				this.notify_ids.set( key, value );
 			} )
 		} ).catch( err => {
 			Bot.logger.error( err );
@@ -48,13 +56,19 @@ export class Task {
 				const time = this.notifications.get( gids ) || 0;
 				if ( Date.now() - time < this.EXPIRE_TIME ) continue;
 				
-				if ( codes.length < total ) {
-					Bot.logger.info( `${ title }-直播兑换码，暂时仅获取到${ codes.length }个直播兑换码，剩余 ${ total - codes.length } 个` );
-					continue;
+				let tips: string = "";
+				const _codes = codes.filter( code => !this.notify_ids.has( code ) );
+				_codes.forEach( code => {
+					this.notify_ids.set( code, Date.now() );
+				} );
+				if ( codes.length >= total ) {
+					tips = `${ title }-直播兑换码，兑换码将于${ expireDate }过期，请尽快兑换~`;
+					this.notifications.set( gids, Date.now() );
+					this.notify_ids.clear();
+				} else {
+					tips = `${ title }-直播兑换码，暂时仅获取到${ codes.length }个直播兑换码，剩余 ${ total - codes.length } 个`;
 				}
-				const tips: string = `${ title }-直播兑换码，兑换码将于${ expireDate }过期，请尽快兑换~`;
-				this.notifications.set( gids, Date.now() );
-				const item = codes.map( code => ( {
+				const item = _codes.map( code => ( {
 					user_id: Bot.client.uin,
 					nickname: info.data.nickname || "Bot",
 					content: code
@@ -96,6 +110,8 @@ export class Task {
 			
 			// 把通知缓存入库
 			await Bot.redis.setHash( db_key.notificationStatus, this.notifications );
+			await Bot.redis.setHash( db_key.notify_ids, this.notify_ids );
+			await Bot.redis.setTimeout( db_key.notify_ids, this.EXPIRE_TIME );
 		} )
 	}
 	
