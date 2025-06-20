@@ -61,6 +61,8 @@ export class Task {
 				_codes.forEach( code => {
 					this.notify_ids.set( code, Date.now() );
 				} );
+				if ( _codes.length === 0 ) continue;
+				
 				if ( codes.length >= total ) {
 					tips = `${ title }-直播兑换码，兑换码将于${ expireDate }过期，请尽快兑换~`;
 					this.notifications.set( gids, Date.now() );
