@@ -52,7 +52,7 @@ const officials: Official[] = [
 		keywords: [ "前瞻讨论活动", "版本前瞻" ],
 		total_cdk: 1,
 		gids: 8,
-		expire_time: 48
+		expire_time: 72
 	}
 ];
 
