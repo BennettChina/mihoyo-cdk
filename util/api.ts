@@ -44,7 +44,7 @@ const officials: Official[] = [
 		keywords: [ "特别节目预告", "版本特别节目", "节目预告" ],
 		total_cdk: 1,
 		gids: 1,
-		expire_time: 36
+		expire_time: 48
 	},
 	{
 		name: "绝区零",
