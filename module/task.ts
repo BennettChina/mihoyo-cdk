@@ -111,7 +111,9 @@ export class Task {
 			}
 			
 			// 把通知缓存入库
+			Bot.logger.info( `[miHoYo-cdk-task] var notifications values: `, this.notifications );
 			await Bot.redis.setHash( db_key.notificationStatus, this.notifications );
+			Bot.logger.info( `[miHoYo-cdk-task] var notify_ids values: `, this.notify_ids );
 			await Bot.redis.setHash( db_key.notify_ids, this.notify_ids );
 			await Bot.redis.setTimeout( db_key.notify_ids, this.EXPIRE_TIME );
 		} )
